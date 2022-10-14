@@ -7,13 +7,6 @@
         mc:Ignorable="d"
         Title="Desktop Process (WPF)" Height="300" Width="500">
     <Grid Margin="12">
-        <TextBlock Text="Scenario 2 - Send Request to UWP" FontSize="20"/>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
-            <TextBox x:Name="tb1" Width="100" VerticalAlignment="Center" TextChanged="tb_TextChanged"/>
-            <TextBlock FontSize="20" Text=" + " VerticalAlignment="Center"/>
-            <TextBox x:Name="tb2" Width="100" VerticalAlignment="Center" TextChanged="tb_TextChanged"/>
-            <Button x:Name="btnCalc" Margin="3" FontSize="20" IsEnabled="False" Content=" = " VerticalAlignment="Center" Click="Button_Click"/>
-            <TextBlock x:Name="tbResult" VerticalAlignment="Center" FontSize="24"/>
-        </StackPanel>
+        <TextBlock Text="Respond to Request from UWP" FontSize="20"/>
     </Grid>
 </Window>

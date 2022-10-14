@@ -5,36 +5,75 @@
     xmlns:local="using:UWP"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Height = "600" Width = "1100">
 
-    <Page.Resources>
-        <LinearGradientBrush x:Key="grayGradient" StartPoint="0.5,0" EndPoint="0.5,1">
-            <LinearGradientBrush.GradientStops>
-                <GradientStop Color="White" Offset="0"/>
-                <GradientStop Color="LightGray" Offset="1"/>
-            </LinearGradientBrush.GradientStops>
-        </LinearGradientBrush>
-    </Page.Resources>
+    <Grid>
+        <!--Video From Camera-->
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Background="{StaticResource grayGradient}">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="Scenario 1 - Read Registry Key Values" FontSize="20"/>
-                <TextBox x:Name="tbKey" Width="500" Text="HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"/>
-                <Button x:Name="btnRegKey" Margin="0,3,0,3" Content="Invoke desktop code to read reg key" HorizontalAlignment="Stretch" IsEnabled="False" Click="btnClick_ReadKey"/>
-                <TextBlock Text="Result: " FontSize="20"/>
-                <TextBox x:Name="tbResult" Height="100" AcceptsReturn="True" IsReadOnly="True" FontSize="10" FontFamily="Consolas"/>
-            </StackPanel>
-        </Grid>
-        <Grid Grid.Row="1" Background="{StaticResource grayGradient}">
-            <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="Scenario 2 - Handle Requests from Desktop Code" FontSize="20"/>
-                <TextBox Width="500" x:Name="tbRequests" Height="100" AcceptsReturn="True" IsReadOnly="True"/>
-            </StackPanel>
-        </Grid>
+        <Button x:Name="TakeoffButton" Click="AutoTakeoff" Height="40"
+                Width="120" Content="Auto Takeoff" Margin="70,25,0,0"
+                VerticalAlignment="Top" RenderTransformOrigin="0.483,0.4" />
+
+        <!--<Button x:Name="SetHomeButton" Click="SetHome" Height="40"
+                Width="120" Content="Set Home" Margin="10,10,0,0"
+                VerticalAlignment="Top" RenderTransformOrigin="2.817,4.2" />
+
+        <Button x:Name="GoHomeButton" Click="GoHome" Height="40"
+                Width="120" Content="Go Home" Margin="10,55,0,0"
+                VerticalAlignment="Top" />-->
+        <!-- Mission buttons-->
+        <Button x:Name="InitMissionButton" Click="InitMission" Height="40"
+                Width="120" Content="Init Mission" Margin="530,60,0,0"
+                VerticalAlignment="Top" RenderTransformOrigin="0.483,0.4" />
+
+        <Button x:Name="AddWaypointbutton" Click="AddWaypointAtCurrentLocation" Height="40"
+                Width="145" Content="Add Waypoint Here" Margin="434,114,0,0"
+                VerticalAlignment="Top" RenderTransformOrigin="2.817,4.2" />
+
+        <Button x:Name="uploadmissionbutton" Click="UploadMission" Height="40"
+                Width="120" Content="Upload Mission" Margin="70,85,0,0"
+                VerticalAlignment="Top" />
+
+        <Button x:Name="startmissionbutton" Click="ExecuteMission" Height="40"
+                Width="120" Content="Start Mission" Margin="190,85,0,0"
+                VerticalAlignment="Top" />
+
+        <Button x:Name="stopmissionbutton" Click="StopMission" Height="40"
+                Width="120" Content="Stop Mission" Margin="70,139,0,0"
+                VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
+
+        <Button x:Name="getstatebutton" Click="GetState" Height="40"
+                Width="120" Content="Get State" Margin="70,421,0,0"
+                VerticalAlignment="Top" />
+
+        <Button x:Name="setantennalocation" Click="setAntennaLocation" Height="40"
+                Width="159" Content="Set Antenna location" Margin="491,421,0,0"
+                VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
+
+        <Button x:Name="setantennaheight" Click="setAntennaElevation" Height="40"
+                Width="165" Content="Set Antenna Elevation" Margin="650,421,0,0"
+                VerticalAlignment="Top" />
+        <!--testing-->
+        <Button x:Name="testLatButton" Click="oneMeterTestLat" Height="40"
+                Width="84" Content="Test Lat" Margin="668,114,0,0"
+                VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
+
+        <Button x:Name="testLonButton" Click="oneMeterTestLon" Height="40"
+                Width="84" Content="Test Lon" Margin="584,114,0,0"
+                VerticalAlignment="Top" />
+
+        <Button x:Name="Pinglocation" Click="getLocation" Height="40"
+            Width="120" Content="Get Location" Margin="70,376,0,0"
+            VerticalAlignment="Top" />
+
+        <Button x:Name="makeAzimuthMission" Click="generateAzimuthMission" Height="40"
+            Width="177" Content="Make Azimuth Mission" Margin="757,114,0,0"
+            VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
+
+        <Button x:Name="runDesktopCodeButton" Click="getMagnitude"  Height="40"
+            Width="159" Content="Run Desktop Extension Code" Margin="491,371,0,0"
+            VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
     </Grid>
 </Page>

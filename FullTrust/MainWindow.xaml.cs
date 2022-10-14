@@ -1,4 +1,7 @@
-﻿using Microsoft.Win32;
+﻿//CREDIT: desktop link code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial
+///https://stefanwick.com/2018/04/16/uwp-with-desktop-extension-part-3/
+
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +21,6 @@ namespace FullTrust
     /// </summary>
     public partial class MainWindow : Window
     {
-        private double d1, d2;
         private AppServiceConnection connection = null;
 
         public MainWindow()
@@ -64,90 +66,21 @@ namespace FullTrust
         /// </summary>
         private async void Connection_RequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
         {
-            // retrive the reg key name from the ValueSet in the request
-            string key = args.Request.Message["KEY"] as string;
-            int index = key.IndexOf('\\');
-            if (index > 0)
-            {
-                // read the key values from the respective hive in the registry
-                string hiveName = key.Substring(0, key.IndexOf('\\'));
-                string keyName = key.Substring(key.IndexOf('\\') + 1);
-                RegistryHive hive = RegistryHive.ClassesRoot;
+            string data = "TEST DATA";
+            ValueSet response = new ValueSet();
 
-                switch (hiveName)
-                {
-                    case "HKLM":
-                        hive = RegistryHive.LocalMachine;
-                        break;
-                    case "HKCU":
-                        hive = RegistryHive.CurrentUser;
-                        break;
-                    case "HKCR":
-                        hive = RegistryHive.ClassesRoot;
-                        break;
-                    case "HKU":
-                        hive = RegistryHive.Users;
-                        break;
-                    case "HKCC":
-                        hive = RegistryHive.CurrentConfig;
-                        break;
-                }
+            ////Start session with spec analyzer
+            //var session = (Ivi.Visa.IMessageBasedSession)
+            //    Ivi.Visa.GlobalResourceManager.Open("USB0::0x1AB1::0x0960::DSA8A221700409::INSTR");
 
-                using (RegistryKey regKey = RegistryKey.OpenRemoteBaseKey(hive, "").OpenSubKey(keyName))
-                {
-                    // compose the response as ValueSet
-                    ValueSet response = new ValueSet();
-                    if (regKey != null)
-                    {
-                        foreach (string valueName in regKey.GetValueNames())
-                        {
-                            response.Add(valueName, regKey.GetValue(valueName).ToString());
-                        }
-                    }
-                    else
-                    {
-                        response.Add("ERROR", "KEY NOT FOUND");
-                    }
-                    // send the response back to the UWP
-                    await args.Request.SendResponseAsync(response);
-                }
-            }
-            else
-            {
-                ValueSet response = new ValueSet();
-                response.Add("ERROR", "INVALID REQUEST");
-                await args.Request.SendResponseAsync(response);
-            }
-        }
+            ////Ask for value at marker
+            //session.FormattedIO.WriteLine("CALC:MARK:Y?");
+            ////Get Response
+            //data = session.FormattedIO.ReadLine();
 
-        /// <summary>
-        /// Sends a request to the UWP app
-        /// </summary>
-        private async void Button_Click(object sender, RoutedEventArgs e)
-        {
-            // ask the UWP to calculate d1 + d2
-            ValueSet request = new ValueSet();
-            request.Add("D1", d1);
-            request.Add("D2", d2);
-            AppServiceResponse response = await connection.SendMessageAsync(request);
-            double result = (double)response.Message["RESULT"];
-            tbResult.Text = result.ToString();
-        }
-
-        /// <summary>
-        /// Determines whether the "equals" button should be enabled
-        /// based on input in the text boxes
-        /// </summary>
-        private void tb_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (double.TryParse(tb1.Text, out d1) && double.TryParse(tb2.Text, out d2))
-            {
-                btnCalc.IsEnabled = true;
-            }
-            else
-            {
-                btnCalc.IsEnabled = false;
-            }
+            //send to UWP app
+            response.Add("Magnitude", data);
+            await args.Request.SendResponseAsync(response);
         }
     }
 }
