@@ -1,19 +1,11 @@
-# UWP with Desktop Extension Tutorial - Part 3
+# SteppIRDrone
+This code interfaces with a DJI Phantom 4 Pro V2 done and a RIGOL DSA815 spectrum analyzer to
+carry a payload transmit antenna around a receiving antenna to plot the receiving antennas (AUTs)
+radiation pattern in azimuth at the elevation of highest gain. 
 
-Sharing the code for the tutorial from my blog: https://stefanwick.com/2018/04/16/uwp-with-desktop-extension-part-3/
+Build all three projects and deploy the Package project in VS build settings. Package runs UWP and FullTrust.
+The UWP application contains the GUI and nearly all functionality, FullTrust just comminucates with the spectrum analyzer
+and sends its data to the UWP app.
 
-This sample app can also be downloaded from the Microsoft Store:
-https://www.microsoft.com/store/apps/9NR0G35Q2F65
-
-You will need the following setup to run these projects:
-- Windows 10 build 16299 or later
-- Windows SDK build 16299
-- Visual Studio 2017 Update 5 or later
-
-
-Build/Deploy and Run the sample
--------------------------------
- - Set "Package" project as Startup project in VS solution explorer
- - Select x86 or x64 platform (change from AnyCPU)
- - Press F5 to run!
- 
+CREDIT: desktop link code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial
+/https://stefanwick.com/2018/04/16/uwp-with-desktop-extension-part-3/
