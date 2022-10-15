@@ -7,7 +7,7 @@
   IgnorableNamespaces="uap mp">
 
   <Identity
-    Name="761ed246-a993-4226-9ec1-c8534176e002"
+    Name="com.SteppIR.DroneSoftware"
     Publisher="CN=swick"
     Version="1.0.0.0" />
 
@@ -38,7 +38,6 @@
         Description="UWP"
         BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
-        <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
     </Application>
   </Applications>

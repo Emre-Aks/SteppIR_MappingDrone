@@ -1,5 +1,11 @@
-﻿//CREDIT: desktop link code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial
+﻿///Property of SteppIR
+///Written by Emre Aksan eaksan1@gmail.com
+///CREDIT: desktop link code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial
 ///https://stefanwick.com/2018/04/16/uwp-with-desktop-extension-part-3/
+
+/// Summary
+/// Insert Summary here z z z z i shleep
+/// Summary
 
 using DJI.WindowsSDK;
 
@@ -346,7 +352,7 @@ namespace UWP
             System.Diagnostics.Debug.WriteLine(place.value.Value.ToString());
         }
 
-        //========================= Stefan Wick's Desktop Link Code ================================
+        //========================= Below Here is Stefan Wick's Code, modified ================================
         protected async override void OnNavigatedTo(NavigationEventArgs e)//kick off the desktop process and listen to app service connection events
         {
             base.OnNavigatedTo(e);

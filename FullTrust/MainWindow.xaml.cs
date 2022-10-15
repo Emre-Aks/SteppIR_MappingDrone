@@ -69,14 +69,14 @@ namespace FullTrust
             string data = "TEST DATA";
             ValueSet response = new ValueSet();
 
-            ////Start session with spec analyzer
-            //var session = (Ivi.Visa.IMessageBasedSession)
-            //    Ivi.Visa.GlobalResourceManager.Open("USB0::0x1AB1::0x0960::DSA8A221700409::INSTR");
+            //Start session with spec analyzer
+            var session = (Ivi.Visa.IMessageBasedSession)
+                Ivi.Visa.GlobalResourceManager.Open("USB0::0x1AB1::0x0960::DSA8A221700409::INSTR");
 
-            ////Ask for value at marker
-            //session.FormattedIO.WriteLine("CALC:MARK:Y?");
-            ////Get Response
-            //data = session.FormattedIO.ReadLine();
+            //Ask for value at marker
+            session.FormattedIO.WriteLine("CALC:MARK:Y?");
+            //Get Response
+            data = session.FormattedIO.ReadLine();
 
             //send to UWP app
             response.Add("Magnitude", data);
