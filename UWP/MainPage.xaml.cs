@@ -6,6 +6,12 @@
 /// Summary
 /// Insert Summary here z z z z i shleep
 /// Summary
+/// 
+
+///TODO
+///add/update function summareis
+///match to 80 character max line length
+///TODO
 
 using DJI.WindowsSDK;
 
