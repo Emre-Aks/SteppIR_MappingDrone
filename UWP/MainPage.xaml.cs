@@ -47,8 +47,11 @@ namespace UWP
         private double antennaMinRadius;//minimum radius that can be flown around the antenna
 
         //For internal use
+        bool executing;
         BoolMsg trueMsg;
         BoolMsg falseMsg;
+        double degreesInMeterLat = .00001;
+        double degreesInMeterLon =.00001;
         public MainPage()
         {
             this.InitializeComponent();
@@ -61,6 +64,7 @@ namespace UWP
             falseMsg.value = false;
         }
 
+        //=================================== UI Buttons =============================================================
         private async void setAntennaLocation(object sender, RoutedEventArgs e)//for logging antenna location
         {
             //result from getaircraftlocation
@@ -105,140 +109,6 @@ namespace UWP
                 _azimuthMission.waypoints.Add(curr);
             }
         }
-        private async void runDesktopCode(object sender, RoutedEventArgs routedEventArgs)
-        {
-            if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1, 0))
-            {
-                await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
-            }
-        }
-
-        //===========================utility functions=============================================
-        private async void Instance_SDKRegistrationEvent(SDKRegistrationState state, SDKError resultCode)
-        {
-            if (resultCode == SDKError.NO_ERROR)
-            {
-                System.Diagnostics.Debug.WriteLine("Register app successfully.");
-
-                //The product connection state will be updated when it changes here.
-                DJISDKManager.Instance.ComponentManager.GetProductHandler(0).ProductTypeChanged += async delegate (object sender, ProductTypeMsg? value)
-                {
-                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
-                    {
-                        if (value != null && value?.value != ProductType.UNRECOGNIZED)
-                        {
-                            System.Diagnostics.Debug.WriteLine("The Aircraft is connected now.");
-                            //You can load/display your pages according to the aircraft connection state here.
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine("The Aircraft is disconnected now.");
-                            //You can hide your pages according to the aircraft connection state here, or show the connection tips to the users.
-                        }
-                    });
-                };
-
-                //If you want to get the latest product connection state manually, you can use the following code
-                var productType = (await DJISDKManager.Instance.ComponentManager.GetProductHandler(0).GetProductTypeAsync()).value;
-                if (productType != null && productType?.value != ProductType.UNRECOGNIZED)
-                {
-                    System.Diagnostics.Debug.WriteLine("The Aircraft is connected now.");
-                    //You can load/display your pages according to the aircraft connection state here.
-                }
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("Register SDK failed, the error is: ");
-                System.Diagnostics.Debug.WriteLine(resultCode.ToString());
-            }
-        }
-        private async void AutoTakeoff(object sender, RoutedEventArgs e) //takeoff drone
-        {
-            //write result of StartTakeOffAsync() to debug console
-            System.Diagnostics.Debug.WriteLine(
-                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
-                .StartTakeoffAsync());
-        }
-        private async void SetHome(object sender, RoutedEventArgs e)
-        {
-            //send result of .SetHomeLocationUsingAircraftCurrentLocationAsync() to debug console
-            System.Diagnostics.Debug.WriteLine(
-                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
-                .SetHomeLocationUsingAircraftCurrentLocationAsync());
-        }
-        private async void GoHome(object sender, RoutedEventArgs e)
-        {
-            //Send result of .StartGoHomeAsync() to debug
-            System.Diagnostics.Debug.WriteLine(
-                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
-                .StartGoHomeAsync());
-        }
-        private void GetState(object sender, RoutedEventArgs e)
-        {
-            //Send .GetCurrentState() result to debug
-            System.Diagnostics.Debug.WriteLine(
-                DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
-                .GetCurrentState());
-        }
-        private async void StopMission(object sender, RoutedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                await DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
-                .StopMission());
-        }
-        private async void CalibrateCompass(object sender, RoutedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
-                .StartCompasCalibrationAsync());
-        }
-        private async void CalibrateIMU(object sender, RoutedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
-                .StartIMUCalibrationAsync());
-        }
-        private double toLon(double meters)
-        {
-            //1 degree = 40075000 meters * cos( latitude ) / 360
-            //double earthLatitude = 47.7584;//curent locations latitude
-            //return meters / 40075000 * (Math.Cos(earthLatitude) / 360);
-            double degreesInMeter = 0.00001;
-            return meters * degreesInMeter;
-        }//uses numbers from testing fuctions
-        private double toLat(double meters)
-        {
-            double degreesInMeter = 0.00001;//
-            return meters * degreesInMeter;
-        }//usues numbers from testing fuctions
-        //===============================    for internal use ============================================
-        private DJI.WindowsSDK.Waypoint makeWaypoint(LocationCoordinate2D _location, double _height)
-        {
-            DJI.WindowsSDK.Waypoint waypoint = new DJI.WindowsSDK.Waypoint();
-            waypoint.location = _location;
-            waypoint.altitude = _height;
-            waypoint.cornerRadiusInMeters = radius;
-            return waypoint;
-        }
-        private DJI.WindowsSDK.Waypoint makeWaypoint(double _lat, double _lon, double _height)
-        {
-            LocationCoordinate2D _location = new LocationCoordinate2D();
-            _location.latitude = _lat;
-            _location.longitude = _lon;
-            DJI.WindowsSDK.Waypoint waypoint = new DJI.WindowsSDK.Waypoint();
-            waypoint.location = _location;
-            waypoint.altitude = _height;
-            waypoint.cornerRadiusInMeters = radius;
-            return waypoint;
-        }
-        private LocationCoordinate2D makeCoordinate(double _lat, double _lon)
-        {
-            LocationCoordinate2D _location = new LocationCoordinate2D();
-            _location.latitude = _lat;
-            _location.longitude = _lon;
-            return _location;
-        }
-        //===========================testing functions=====================================================
         private async void InitMission(object sender, RoutedEventArgs e)//resets and configures _altitudeMission
         {
             _azimuthMission = new WaypointMission()
@@ -274,23 +144,6 @@ namespace UWP
                 .SetVisionAssistedPositioningEnabledAsync(trueMsg);
             System.Diagnostics.Debug.WriteLine(resultcode.ToString());
         }
-        private async void AddWaypointAtCurrentLocation(object sender, RoutedEventArgs e)//adds a waypoint to _altitudeMission at current location
-        {
-            //waypoint and its data
-            ResultValue<LocationCoordinate2D?> place;
-            ResultValue<DoubleMsg?> height;
-            //Get current latitude, longitude, and altitude
-            place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
-            height = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAltitudeAsync();
-            //Add waypoint
-            DJI.WindowsSDK.Waypoint _waypoint = new DJI.WindowsSDK.Waypoint();
-            _waypoint.location = place.value.Value;
-            _waypoint.altitude = height.value.Value.value;
-            _waypoint.cornerRadiusInMeters = 3;
-            _azimuthMission.waypoints.Add(_waypoint);
-            System.Diagnostics.Debug.WriteLine("added a waypoint at (" + _waypoint.location.latitude
-                + ", " + _waypoint.location.longitude + ")");
-        }
         private async void UploadMission(object sender, RoutedEventArgs e)//uploads the mission to the drone
         {
             //for error reporting
@@ -309,6 +162,135 @@ namespace UWP
             resultcode = await DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
                 .StartMission();
             System.Diagnostics.Debug.WriteLine(resultcode.ToString());
+        }
+        private void GetState(object sender, RoutedEventArgs e)
+        {
+            //Send .GetCurrentState() result to debug
+            System.Diagnostics.Debug.WriteLine(
+                DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
+                .GetCurrentState());
+        }
+        private async void StopMission(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                await DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
+                .StopMission());
+        }
+        private async void startLogging(object sender, RoutedEventArgs e)
+        {
+            Windows.Storage.StorageFolder storageFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+            Windows.Storage.StorageFile azimuthFile = await storageFolder.GetFileAsync("AzimuthData");
+
+            executing = true;
+            string pair =  "";
+            while(executing)//this will be set false by the stopLogging button
+            {
+                pair += ("(" + await getAngle() + ",");//does these await work as intended?
+                pair += (await getMagnitude() + ") ");
+                await Windows.Storage.FileIO.WriteTextAsync(azimuthFile, pair);
+                pair = "";
+                //wait for time set by polling rate
+            }
+        }
+        private void stopLogging(object sender, RoutedEventArgs e)
+        {
+            executing = false;
+        }
+        private async void AutoTakeoff(object sender, RoutedEventArgs e) //takeoff drone
+        {
+            //write result of StartTakeOffAsync() to debug console
+            System.Diagnostics.Debug.WriteLine(
+                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
+                .StartTakeoffAsync());
+        }
+        //=============================== helper functions ============================================
+        private DJI.WindowsSDK.Waypoint makeWaypoint(LocationCoordinate2D _location, double _height)
+        {
+            DJI.WindowsSDK.Waypoint waypoint = new DJI.WindowsSDK.Waypoint();
+            waypoint.location = _location;
+            waypoint.altitude = _height;
+            waypoint.cornerRadiusInMeters = radius;
+            return waypoint;
+        }
+        private DJI.WindowsSDK.Waypoint makeWaypoint(double _lat, double _lon, double _height)
+        {
+            LocationCoordinate2D _location = new LocationCoordinate2D();
+            _location.latitude = _lat;
+            _location.longitude = _lon;
+            DJI.WindowsSDK.Waypoint waypoint = new DJI.WindowsSDK.Waypoint();
+            waypoint.location = _location;
+            waypoint.altitude = _height;
+            waypoint.cornerRadiusInMeters = radius;
+            return waypoint;
+        }
+        private LocationCoordinate2D makeCoordinate(double _lat, double _lon)
+        {
+            LocationCoordinate2D _location = new LocationCoordinate2D();
+            _location.latitude = _lat;
+            _location.longitude = _lon;
+            return _location;
+        }
+        private async Task<double> getAngle()
+        {
+            //waypoint and its data
+            ResultValue<LocationCoordinate2D?> place;
+
+            //Get current latitude, longitude, and altitude
+            place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
+
+            //get two sides of triangle
+            double x = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);
+            double y = lonToMeters(place.value.Value.longitude - aboveAntenna.location.longitude);
+
+            //Right triangle, solve for angle
+            return Math.Asin(y / x);
+        }
+        private async Task<string> getMagnitude()
+        {
+            //Ask for Magnitude key value pair from desktop service
+            ValueSet request = new ValueSet();
+            request.Add("Magnitude", "GIMME");
+            //get response
+            AppServiceResponse response = await App.Connection.SendMessageAsync(request);
+
+            //output to debug and return Magnitude
+            string Magnitude = response.Message["Magnitude"].ToString();
+            System.Diagnostics.Debug.WriteLine(Magnitude);
+            return Magnitude;
+        }
+        private double toLon(double meters)
+        {
+            return meters * degreesInMeterLon;
+        }
+        private double lonToMeters(double lon)
+        {
+            return lon * (1 / degreesInMeterLon);
+        }
+        private double toLat(double meters)
+        {
+            return meters * degreesInMeterLat;
+        }
+        private double latToMeters(double lat)
+        {
+            return lat * (1 / degreesInMeterLat);
+        }
+        //===========================testing functions=====================================================
+        private async void AddWaypointAtCurrentLocation(object sender, RoutedEventArgs e)//adds a waypoint to _altitudeMission at current location
+        {
+            //waypoint and its data
+            ResultValue<LocationCoordinate2D?> place;
+            ResultValue<DoubleMsg?> height;
+            //Get current latitude, longitude, and altitude
+            place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
+            height = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAltitudeAsync();
+            //Add waypoint
+            DJI.WindowsSDK.Waypoint _waypoint = new DJI.WindowsSDK.Waypoint();
+            _waypoint.location = place.value.Value;
+            _waypoint.altitude = height.value.Value.value;
+            _waypoint.cornerRadiusInMeters = 3;
+            _azimuthMission.waypoints.Add(_waypoint);
+            System.Diagnostics.Debug.WriteLine("added a waypoint at (" + _waypoint.location.latitude
+                + ", " + _waypoint.location.longitude + ")");
         }
         private async void oneMeterTestLat(object sender, RoutedEventArgs e)//reports distance in lat and lon from aboveAntenna
         {
@@ -352,7 +334,35 @@ namespace UWP
             System.Diagnostics.Debug.WriteLine(place.value.Value.ToString());
         }
 
-        //========================= Below Here is Stefan Wick's Code, modified ================================
+        //=========================== unused utility functions =============================================
+        private async void SetHome(object sender, RoutedEventArgs e)
+        {
+            //send result of .SetHomeLocationUsingAircraftCurrentLocationAsync() to debug console
+            System.Diagnostics.Debug.WriteLine(
+                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
+                .SetHomeLocationUsingAircraftCurrentLocationAsync());
+        }
+        private async void GoHome(object sender, RoutedEventArgs e)
+        {
+            //Send result of .StartGoHomeAsync() to debug
+            System.Diagnostics.Debug.WriteLine(
+                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
+                .StartGoHomeAsync());
+        }
+        private async void CalibrateCompass(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
+                .StartCompasCalibrationAsync());
+        }
+        private async void CalibrateIMU(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
+                .StartIMUCalibrationAsync());
+        }
+
+        //========================= Desktop Link code, credit Stefan Wick ================================
         protected async override void OnNavigatedTo(NavigationEventArgs e)//kick off the desktop process and listen to app service connection events
         {
             base.OnNavigatedTo(e);
@@ -397,15 +407,6 @@ namespace UWP
                 dlg.Commands.Add(noCommand);
                 await dlg.ShowAsync();
             }
-        }
-        private async void getMagnitude(object sender, RoutedEventArgs e)
-        {
-            ValueSet request = new ValueSet();
-            request.Add("Magnitude", "GIMME");
-            AppServiceResponse response = await App.Connection.SendMessageAsync(request);
-
-            string Magnitude = response.Message["Magnitude"].ToString();
-            System.Diagnostics.Debug.WriteLine(Magnitude);
         }
     }
 }
