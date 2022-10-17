@@ -7,13 +7,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    Height = "600" Width = "1100">
+    Height = "447" Width = "580">
 
     <Grid>
         <!--Video From Camera-->
 
         <Button x:Name="TakeoffButton" Click="AutoTakeoff" Height="40"
-                Width="120" Content="Auto Takeoff" Margin="70,25,0,0"
+                Width="120" Content="Auto Takeoff" Margin="31,35,0,0"
                 VerticalAlignment="Top" RenderTransformOrigin="0.483,0.4" />
 
         <!--<Button x:Name="SetHomeButton" Click="SetHome" Height="40"
@@ -25,55 +25,51 @@
                 VerticalAlignment="Top" />-->
         <!-- Mission buttons-->
         <Button x:Name="InitMissionButton" Click="InitMission" Height="40"
-                Width="120" Content="Init Mission" Margin="530,60,0,0"
+                Width="120" Content="Init Mission" Margin="40,255,0,0"
                 VerticalAlignment="Top" RenderTransformOrigin="0.483,0.4" />
 
-        <Button x:Name="AddWaypointbutton" Click="AddWaypointAtCurrentLocation" Height="40"
-                Width="145" Content="Add Waypoint Here" Margin="434,114,0,0"
-                VerticalAlignment="Top" RenderTransformOrigin="2.817,4.2" />
-
         <Button x:Name="uploadmissionbutton" Click="UploadMission" Height="40"
-                Width="120" Content="Upload Mission" Margin="70,85,0,0"
+                Width="120" Content="Upload Mission" Margin="165,255,0,0"
                 VerticalAlignment="Top" />
 
         <Button x:Name="startmissionbutton" Click="ExecuteMission" Height="40"
-                Width="120" Content="Start Mission" Margin="190,85,0,0"
+                Width="120" Content="Start Mission" Margin="290,255,0,0"
                 VerticalAlignment="Top" />
 
         <Button x:Name="stopmissionbutton" Click="StopMission" Height="40"
-                Width="120" Content="Stop Mission" Margin="70,139,0,0"
+                Width="120" Content="Stop Mission" Margin="415,255,0,0"
                 VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
 
         <Button x:Name="getstatebutton" Click="GetState" Height="40"
-                Width="120" Content="Get State" Margin="70,421,0,0"
+                Width="120" Content="Get State" Margin="156,35,0,0"
                 VerticalAlignment="Top" />
 
         <Button x:Name="setantennalocation" Click="setAntennaLocation" Height="40"
-                Width="159" Content="Set Antenna location" Margin="491,421,0,0"
+                Width="159" Content="Set Antenna location" Margin="32,141,0,0"
                 VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
 
         <Button x:Name="setantennaheight" Click="setAntennaElevation" Height="40"
-                Width="165" Content="Set Antenna Elevation" Margin="650,421,0,0"
+                Width="165" Content="Set Antenna Elevation" Margin="191,141,0,0"
                 VerticalAlignment="Top" />
         <!--testing-->
         <Button x:Name="testLatButton" Click="oneMeterTestLat" Height="40"
-                Width="84" Content="Test Lat" Margin="668,114,0,0"
+                Width="84" Content="Test Lat" Margin="201,300,0,0"
                 VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
 
         <Button x:Name="testLonButton" Click="oneMeterTestLon" Height="40"
-                Width="84" Content="Test Lon" Margin="584,114,0,0"
+                Width="84" Content="Test Lon" Margin="117,300,0,0"
                 VerticalAlignment="Top" />
 
-        <Button x:Name="Pinglocation" Click="getLocation" Height="40"
-            Width="120" Content="Get Location" Margin="70,376,0,0"
-            VerticalAlignment="Top" />
-
         <Button x:Name="makeAzimuthMission" Click="generateAzimuthMission" Height="40"
-            Width="177" Content="Make Azimuth Mission" Margin="757,114,0,0"
+            Width="177" Content="Make Azimuth Mission" Margin="290,300,0,0"
             VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
 
-        <Button x:Name="runDesktopCodeButton" Click="getMagnitude"  Height="40"
-            Width="159" Content="Run Desktop Extension Code" Margin="491,371,0,0"
-            VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
+        <Button x:Name="startLoggingButton" Click="startLogging" Height="40"
+            Width="165" Content="Start Logging" Margin="40,387,0,0"
+            VerticalAlignment="Top" />
+        
+        <Button x:Name="stopLoggingButton" Click="stopLogging" Height="40"
+            Width="165" Content="Stop Logging" Margin="216,387,0,0"
+            VerticalAlignment="Top" />
     </Grid>
 </Page>

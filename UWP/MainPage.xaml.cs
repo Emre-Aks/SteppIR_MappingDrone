@@ -93,6 +93,10 @@ namespace UWP
             place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
             //set antenna elevation
             antennaElevation = height.value.Value.value;
+            //calculate distance sqrt(a2+b2)
+            double a = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);
+            double b = lonToMeters(place.value.Value.longitude - aboveAntenna.location.longitude);
+            antennaMinRadius = Math.Sqrt(Math.Pow(a,2) + Math.Pow(b, 2));
         }
         private void generateAzimuthMission(object sender, RoutedEventArgs e)//needs testing, #3
         {
@@ -184,19 +188,26 @@ namespace UWP
         }
         private async void startLogging(object sender, RoutedEventArgs e)
         {
-            Windows.Storage.StorageFolder storageFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
-            Windows.Storage.StorageFile azimuthFile = await storageFolder.GetFileAsync("AzimuthData");
+            // Create sample file; replace if exists.
+            Windows.Storage.StorageFolder storageFolder =
+                Windows.Storage.ApplicationData.Current.LocalFolder;
+            Windows.Storage.StorageFile azimuthFile =
+                await storageFolder.CreateFileAsync("sample.txt",
+                    Windows.Storage.CreationCollisionOption.ReplaceExisting);
 
-            executing = true;
             string pair =  "";
-            while(executing)//this will be set false by the stopLogging button
+            executing = true;
+            while (executing)//keep logging till mission stops executing
             {
                 pair += ("(" + await getAngle() + ",");//does these await work as intended?
                 pair += (await getMagnitude() + ") ");
-                await Windows.Storage.FileIO.WriteTextAsync(azimuthFile, pair);
+                await Windows.Storage.FileIO.AppendTextAsync(azimuthFile, pair);
+                System.Diagnostics.Debug.WriteLine(pair);
                 pair = "";
                 //wait for time set by polling rate
             }
+            ////while(DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
+            ////    .GetCurrentState().ToString() == "EXECUTING")//keep logging till mission stops executing
         }
         private void stopLogging(object sender, RoutedEventArgs e)
         {
@@ -210,6 +221,44 @@ namespace UWP
                 .StartTakeoffAsync());
         }
         //=============================== helper functions ============================================
+        private async void Instance_SDKRegistrationEvent(SDKRegistrationState state, SDKError resultCode)
+        {
+            if (resultCode == SDKError.NO_ERROR)
+            {
+                System.Diagnostics.Debug.WriteLine("Register app successfully.");
+
+                //The product connection state will be updated when it changes here.
+                DJISDKManager.Instance.ComponentManager.GetProductHandler(0).ProductTypeChanged += async delegate (object sender, ProductTypeMsg? value)
+                {
+                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                    {
+                        if (value != null && value?.value != ProductType.UNRECOGNIZED)
+                        {
+                            System.Diagnostics.Debug.WriteLine("The Aircraft is connected now.");
+                            //You can load/display your pages according to the aircraft connection state here.
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("The Aircraft is disconnected now.");
+                            //You can hide your pages according to the aircraft connection state here, or show the connection tips to the users.
+                        }
+                    });
+                };
+
+                //If you want to get the latest product connection state manually, you can use the following code
+                var productType = (await DJISDKManager.Instance.ComponentManager.GetProductHandler(0).GetProductTypeAsync()).value;
+                if (productType != null && productType?.value != ProductType.UNRECOGNIZED)
+                {
+                    System.Diagnostics.Debug.WriteLine("The Aircraft is connected now.");
+                    //You can load/display your pages according to the aircraft connection state here.
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("Register SDK failed, the error is: ");
+                System.Diagnostics.Debug.WriteLine(resultCode.ToString());
+            }
+        }
         private DJI.WindowsSDK.Waypoint makeWaypoint(LocationCoordinate2D _location, double _height)
         {
             DJI.WindowsSDK.Waypoint waypoint = new DJI.WindowsSDK.Waypoint();
@@ -261,7 +310,7 @@ namespace UWP
 
             //output to debug and return Magnitude
             string Magnitude = response.Message["Magnitude"].ToString();
-            System.Diagnostics.Debug.WriteLine(Magnitude);
+            //System.Diagnostics.Debug.WriteLine(Magnitude);
             return Magnitude;
         }
         private double toLon(double meters)
