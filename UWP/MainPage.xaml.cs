@@ -56,8 +56,8 @@ namespace UWP
         bool executing;
         BoolMsg trueMsg;
         BoolMsg falseMsg;
-        double degreesInMeterLat = .00001;
-        double degreesInMeterLon =.00001;
+        double degreesInMeterLat = .0000095;
+        double degreesInMeterLon =.0000145;
         public MainPage()
         {
             this.InitializeComponent();
@@ -124,8 +124,8 @@ namespace UWP
             _azimuthMission = new WaypointMission()
             {
                 waypointCount = 0,
-                maxFlightSpeed = 15,
-                autoFlightSpeed = 10,
+                maxFlightSpeed = 2,
+                autoFlightSpeed = 2,
                 finishedAction = WaypointMissionFinishedAction.NO_ACTION,
                 headingMode = WaypointMissionHeadingMode.TOWARD_POINT_OF_INTEREST,
                 flightPathMode = WaypointMissionFlightPathMode.CURVED,
@@ -199,8 +199,8 @@ namespace UWP
             executing = true;
             while (executing)//keep logging till mission stops executing
             {
-                pair += ("(" + await getAngle() + ",");//does these await work as intended?
-                pair += (await getMagnitude() + ") ");
+                pair += (await getAngle() + ",");
+                pair += (await getMagnitude());
                 await Windows.Storage.FileIO.AppendTextAsync(azimuthFile, pair);
                 System.Diagnostics.Debug.WriteLine(pair);
                 pair = "";
@@ -294,11 +294,24 @@ namespace UWP
             place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
 
             //get two sides of triangle
-            double x = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);
-            double y = lonToMeters(place.value.Value.longitude - aboveAntenna.location.longitude);
+            double y = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);
+            double x = lonToMeters(place.value.Value.longitude - aboveAntenna.location.longitude);
 
-            //Right triangle, solve for angle
-            return Math.Asin(y / x);
+            //Right triangle, solve for angle, convert from radians to degrees
+            //return (180 / Math.PI) * Math.Atan(x / y);
+            if (x > 0 && y > 0) {//Q1
+                return (180 / Math.PI) * Math.Atan(y/x);
+            }
+            else if (x < 0 && y > 0) {//Q2
+                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 90;
+            }
+            else if (x < 0 && y < 0) {//Q3
+                return ((180 / Math.PI) * Math.Atan(y / x)) + 180;
+            }
+            else {//Q4
+                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 270;
+            }
+
         }
         private async Task<string> getMagnitude()
         {
