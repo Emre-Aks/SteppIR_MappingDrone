@@ -45,19 +45,25 @@ namespace UWP
         private WaypointMission _azimuthMission;//mission to fly around antenna
         private WaypointMission _altitudeMission;//mission to fly above antenna
         private double radius = 9.144;//radius desired to fly in meters
-        private double _cornerRadius = 1;
 
         //Antenna Geometrics
         private DJI.WindowsSDK.Waypoint aboveAntenna;//Safe waypoint at min distace above antenna
         private double antennaElevation;//elevation of antenna
         private double antennaMinRadius;//minimum radius that can be flown around the antenna
 
+        //parameters
+        double degreesInMeterLat = .0000095;
+        double degreesInMeterLon = .0000145;
+        int pollRate = 150;//time in milliseconds to wait between data points
+        private double _cornerRadius = 1;//bezier curve radius
+        double flightSpeed = 5;//speed to fly at, change on the fly with the stick up to 10
+
+
         //For internal use
         bool executing;
         BoolMsg trueMsg;
         BoolMsg falseMsg;
-        double degreesInMeterLat = .0000095;
-        double degreesInMeterLon =.0000145;
+        
         public MainPage()
         {
             this.InitializeComponent();
@@ -124,8 +130,8 @@ namespace UWP
             _azimuthMission = new WaypointMission()
             {
                 waypointCount = 0,
-                maxFlightSpeed = 2,
-                autoFlightSpeed = 2,
+                maxFlightSpeed = 10,
+                autoFlightSpeed = flightSpeed,
                 finishedAction = WaypointMissionFinishedAction.NO_ACTION,
                 headingMode = WaypointMissionHeadingMode.TOWARD_POINT_OF_INTEREST,
                 flightPathMode = WaypointMissionFlightPathMode.CURVED,
@@ -192,8 +198,8 @@ namespace UWP
             Windows.Storage.StorageFolder storageFolder =
                 Windows.Storage.ApplicationData.Current.LocalFolder;
             Windows.Storage.StorageFile azimuthFile =
-                await storageFolder.CreateFileAsync("sample.txt",
-                    Windows.Storage.CreationCollisionOption.ReplaceExisting);
+                await storageFolder.CreateFileAsync("azimuthPlot.txt",
+                    Windows.Storage.CreationCollisionOption.GenerateUniqueName);
 
             string pair =  "";
             executing = true;
@@ -204,7 +210,8 @@ namespace UWP
                 await Windows.Storage.FileIO.AppendTextAsync(azimuthFile, pair);
                 System.Diagnostics.Debug.WriteLine(pair);
                 pair = "";
-                //wait for time set by polling rate
+                ////wait for time set by polling rate
+                await Task.Delay(pollRate);
             }
             ////while(DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
             ////    .GetCurrentState().ToString() == "EXECUTING")//keep logging till mission stops executing
