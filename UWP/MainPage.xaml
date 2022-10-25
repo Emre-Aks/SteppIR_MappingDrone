@@ -10,20 +10,11 @@
     Height = "447" Width = "580">
 
     <Grid>
-        <!--Video From Camera-->
 
         <Button x:Name="TakeoffButton" Click="AutoTakeoff" Height="40"
                 Width="120" Content="Auto Takeoff" Margin="31,35,0,0"
                 VerticalAlignment="Top" RenderTransformOrigin="0.483,0.4" />
 
-        <!--<Button x:Name="SetHomeButton" Click="SetHome" Height="40"
-                Width="120" Content="Set Home" Margin="10,10,0,0"
-                VerticalAlignment="Top" RenderTransformOrigin="2.817,4.2" />
-
-        <Button x:Name="GoHomeButton" Click="GoHome" Height="40"
-                Width="120" Content="Go Home" Margin="10,55,0,0"
-                VerticalAlignment="Top" />-->
-        <!-- Mission buttons-->
         <Button x:Name="InitMissionButton" Click="InitMission" Height="40"
                 Width="120" Content="Init Mission" Margin="40,255,0,0"
                 VerticalAlignment="Top" RenderTransformOrigin="0.483,0.4" />
@@ -51,25 +42,25 @@
         <Button x:Name="setantennaheight" Click="setAntennaElevation" Height="40"
                 Width="165" Content="Set Antenna Elevation" Margin="191,141,0,0"
                 VerticalAlignment="Top" />
-        <!--testing-->
-        <Button x:Name="testLatButton" Click="oneMeterTestLat" Height="40"
-                Width="84" Content="Test Lat" Margin="201,300,0,0"
-                VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
-
-        <Button x:Name="testLonButton" Click="oneMeterTestLon" Height="40"
-                Width="84" Content="Test Lon" Margin="117,300,0,0"
-                VerticalAlignment="Top" />
 
         <Button x:Name="makeAzimuthMission" Click="generateAzimuthMission" Height="40"
-            Width="177" Content="Make Azimuth Mission" Margin="290,300,0,0"
+            Width="177" Content="Make Azimuth Mission" Margin="108,300,0,0"
             VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
 
-        <Button x:Name="startLoggingButton" Click="startLogging" Height="40"
-            Width="165" Content="Start Logging" Margin="40,387,0,0"
+        <Button x:Name="makeElevationMission" Click="generateElevationMission" Height="40"
+            Width="177" Content="Make Elevation Mission" Margin="290,300,0,0"
+            VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
+
+        <Button x:Name="startLoggingAzimuthButton" Click="startLogging" Height="40"
+            Width="165" Content="Start Logging Azimuth" Margin="40,387,0,0"
+            VerticalAlignment="Top" />
+
+        <Button x:Name="stopLoggingButton" Click="stopLogging" Height="40"
+            Width="165" Content="Stop Logging" Margin="379,387,0,0"
             VerticalAlignment="Top" />
         
-        <Button x:Name="stopLoggingButton" Click="stopLogging" Height="40"
-            Width="165" Content="Stop Logging" Margin="216,387,0,0"
+        <Button x:Name="startLoggingElevationButton" Click="startLoggingElevation" Height="40"
+            Width="165" Content="Start Logging Elevation" Margin="210,387,0,0"
             VerticalAlignment="Top" />
     </Grid>
 </Page>
