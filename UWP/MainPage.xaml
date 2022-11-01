@@ -58,9 +58,15 @@
         <Button x:Name="stopLoggingButton" Click="stopLogging" Height="40"
             Width="165" Content="Stop Logging" Margin="379,387,0,0"
             VerticalAlignment="Top" />
-        
+
         <Button x:Name="startLoggingElevationButton" Click="startLoggingElevation" Height="40"
             Width="165" Content="Start Logging Elevation" Margin="210,387,0,0"
             VerticalAlignment="Top" />
+
+        <!--<Button x:Name="testlatButton" Click="testlat" Height="40"
+            Width="165" Content="Make Test Lat Mission" Margin="123,0,0,0" />
+        <Button x:Name="testlonButton" Click="testlon" Height="40"
+            Width="165" Content="Make Test Lon Mission" Margin="310,198,0,0"
+            VerticalAlignment="Top" />-->
     </Grid>
 </Page>
