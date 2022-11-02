@@ -1,5 +1,7 @@
 ﻿///Property of SteppIR
 ///Written by Emre Aksan eaksan1@gmail.com
+
+
 ///CREDIT: desktop link code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial
 ///https://stefanwick.com/2018/04/16/uwp-with-desktop-extension-part-3/
 
@@ -41,28 +43,26 @@ namespace UWP
     public sealed partial class MainPage : Page
     {
         //Mission Data
-        private WaypointMission _azimuthMission;//mission to fly around antenna
-        private WaypointMission _altitudeMission;//mission to fly above antenna
-        private double radius = 9.144;//9.144radius desired to fly in meters
+        private WaypointMission _currentMission;//any mission generated is stored here
+        private const double radius = 9.144;//radius desired to fly in meters (UWB feild yellow circle is 9.144 meters)
+        private const double degreesInMeterLat = .0000095;//at UWB, .0000095
+        private const double degreesInMeterLon = .0000140;//at uwb, .0000140
+        private const int pollRate = 150;//time in milliseconds to wait between data points
+        private const double _cornerRadius = 1;//bezier curve radius
+        private const double flightSpeed = 1;//speed to fly at
+        private const int resolution = 8;//# of points in azimuth mission
+        private const int resolutionElevation = 6;//# of points in elevation mission
 
         //Antenna Geometrics
         private DJI.WindowsSDK.Waypoint aboveAntenna;//Safe waypoint at min distace above antenna
         private double antennaElevation;//elevation of antenna
         private double antennaMinRadius;//minimum radius that can be flown around the antenna
+        private double altitudeMaxGain = 0;//set by startLoggingElevation
 
-        //parameters
-        double degreesInMeterLat = .0000095;//originally .0000095
-        double degreesInMeterLon = .0000140;//originally .000014
-        int pollRate = 150;//time in milliseconds to wait between data points
-        private double _cornerRadius = 1;//bezier curve radius
-        double flightSpeed = 1;//speed to fly at, change on the fly with the stick up to 10
-        int resolution = 8;
-        int resolutionElevation = 6;
-
-        //For internal use
-        bool executing;
-        BoolMsg trueMsg;
-        BoolMsg falseMsg;
+        //globals for internal use
+        private bool executing;//flag set to stop logging data
+        private BoolMsg trueMsg;//for DJI SDK method calls
+        private BoolMsg falseMsg;//ditto
         
         public MainPage()
         {
@@ -77,19 +77,19 @@ namespace UWP
         }
 
         //=================================== UI Buttons =============================================================
-        private async void setAntennaLocation(object sender, RoutedEventArgs e)//for logging antenna location
+        private async void setAntennaLocation(object sender, RoutedEventArgs e)//sets aboveAntenna
         {
             //result from getaircraftlocation
             ResultValue<LocationCoordinate2D?> place;
             ResultValue<DoubleMsg?> height;
-            //Get current latitude, longitude
+            //Get current latitude, longitude, elevation
             place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
             height = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAltitudeAsync();
             //set antennaLocation
             aboveAntenna.location = place.value.Value;
             aboveAntenna.altitude = height.value.Value.value;
         }
-        private async void setAntennaElevation(object sender, RoutedEventArgs e)//for logging antenna height
+        private async void setAntennaElevation(object sender, RoutedEventArgs e)//sets antennaElevation and minradius
         {
             //height result and place result
             ResultValue<DoubleMsg?> height;
@@ -104,7 +104,7 @@ namespace UWP
             double b = lonToMeters(place.value.Value.longitude - aboveAntenna.location.longitude);
             antennaMinRadius = Math.Sqrt(Math.Pow(a,2) + Math.Pow(b, 2));
         }
-        private void generateAzimuthMission(object sender, RoutedEventArgs e)//needs testing, #3
+        private void generateAzimuthMission(object sender, RoutedEventArgs e)//makes azimuth mission using a unit circle
         {
             LocationCoordinate2D[] locations = new LocationCoordinate2D[resolution + 1];
             int pointCount = 0;
@@ -123,13 +123,13 @@ namespace UWP
             DJI.WindowsSDK.Waypoint curr = new DJI.WindowsSDK.Waypoint();
             for (int i = 0; i < resolution + 1; i++)
             {
-                curr = makeWaypoint(locations[i], antennaElevation);
+                curr = makeWaypoint(locations[i], altitudeMaxGain);//elevation is set here, can be antennaElevation or altitudeMaxGain
                 curr.cornerRadiusInMeters = _cornerRadius;
                 curr.speed = flightSpeed;
-                _azimuthMission.waypoints.Add(curr);
+                _currentMission.waypoints.Add(curr);
             }
         }
-        private void generateElevationMission(object sender, RoutedEventArgs e)//needs testing, #3
+        private void generateElevationMission(object sender, RoutedEventArgs e)//makes elevation mission using a unit circle
         {
             DJI.WindowsSDK.Waypoint[] locations = new DJI.WindowsSDK.Waypoint[resolutionElevation];
             int pointCount = 0;
@@ -152,12 +152,12 @@ namespace UWP
             {
                 locations[i].cornerRadiusInMeters = _cornerRadius;
                 locations[i].speed = flightSpeed;
-                _azimuthMission.waypoints.Add(locations[i]);
+                _currentMission.waypoints.Add(locations[i]);
             }
         }
-        private async void InitMission(object sender, RoutedEventArgs e)//resets and configures _altitudeMission
+        private async void InitMission(object sender, RoutedEventArgs e)//initializes and configures _altitudeMission
         {
-            _azimuthMission = new WaypointMission()
+            _currentMission = new WaypointMission()
             {
                 waypointCount = 0,
                 maxFlightSpeed = 10,
@@ -196,7 +196,7 @@ namespace UWP
             DJI.WindowsSDK.SDKError resultcode;
             //give mission to class, upload to drone, start mission
             resultcode = DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
-                .LoadMission(_azimuthMission);
+                .LoadMission(_currentMission);
             System.Diagnostics.Debug.WriteLine(resultcode.ToString());
             resultcode = await DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
                 .UploadMission();
@@ -209,27 +209,27 @@ namespace UWP
                 .StartMission();
             System.Diagnostics.Debug.WriteLine(resultcode.ToString());
         }
-        private void GetState(object sender, RoutedEventArgs e)
+        private void GetState(object sender, RoutedEventArgs e)//returns the drone state to debug console
         {
             //Send .GetCurrentState() result to debug
             System.Diagnostics.Debug.WriteLine(
                 DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
                 .GetCurrentState());
         }
-        private async void StopMission(object sender, RoutedEventArgs e)
+        private async void StopMission(object sender, RoutedEventArgs e)//Stops the drone mid-execution of mission
         {
             System.Diagnostics.Debug.WriteLine(
                 await DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
                 .StopMission());
         }
-        private async void startLogging(object sender, RoutedEventArgs e)
+        private async void startLogging(object sender, RoutedEventArgs e)//logs angle and magnitude for azimuth mission
         {
             System.Diagnostics.Debug.WriteLine("Started logging");
             // Create sample file; replace if exists.
             Windows.Storage.StorageFolder storageFolder =
                 Windows.Storage.ApplicationData.Current.LocalFolder;
             Windows.Storage.StorageFile azimuthFile =
-                await storageFolder.CreateFileAsync("azimuthPlot.txt",
+                await storageFolder.CreateFileAsync("azimuthPlot.csv",
                     Windows.Storage.CreationCollisionOption.GenerateUniqueName);
 
             string pair =  "";
@@ -247,35 +247,48 @@ namespace UWP
             ////while(DJISDKManager.Instance.WaypointMissionManager.GetWaypointMissionHandler(0)
             ////    .GetCurrentState().ToString() == "EXECUTING")//keep logging till mission stops executing
         }
-        private async void startLoggingElevation(object sender, RoutedEventArgs e)
+        private async void startLoggingElevation(object sender, RoutedEventArgs e)//logs angle and magnitude for elevation mission
         {
+            ResultValue<DoubleMsg?> height;
+
             System.Diagnostics.Debug.WriteLine("Started logging");
             // Create sample file; replace if exists.
             Windows.Storage.StorageFolder storageFolder =
                 Windows.Storage.ApplicationData.Current.LocalFolder;
             Windows.Storage.StorageFile azimuthFile =
-                await storageFolder.CreateFileAsync("elevationPlot.txt",
+                await storageFolder.CreateFileAsync("elevationPlot.csv",
                     Windows.Storage.CreationCollisionOption.GenerateUniqueName);
 
             string pair = "";
+            string mag;
             executing = true;
             while (executing)//keep logging till mission stops executing
             {
+                //get magnitude
+                mag = await getMagnitude();
+                //Update altitude of max gain
+                if (altitudeMaxGain < Convert.ToDouble(mag))
+                {
+                    height = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAltitudeAsync();
+                    altitudeMaxGain = height.value.Value.value;
+                }
+                //add angle and magnitude to file, output to debug
                 pair += (await getAngleElevation() + ",");
-                pair += (await getMagnitude());
+                pair += mag;
                 await Windows.Storage.FileIO.AppendTextAsync(azimuthFile, pair);
                 System.Diagnostics.Debug.WriteLine(pair);
+                //clear pair
                 pair = "";
-                ////wait for time set by polling rate
+                //wait for time set by polling rate
                 await Task.Delay(pollRate);
             }
         }
-        private void stopLogging(object sender, RoutedEventArgs e)
+        private void stopLogging(object sender, RoutedEventArgs e)//sets flag for logging functions to stop logging
         {
             executing = false;
             System.Diagnostics.Debug.WriteLine("Stopped logging");
         }
-        private async void AutoTakeoff(object sender, RoutedEventArgs e) //takeoff drone
+        private async void AutoTakeoff(object sender, RoutedEventArgs e)//takeoff drone
         {
             //write result of StartTakeOffAsync() to debug console
             System.Diagnostics.Debug.WriteLine(
@@ -283,7 +296,7 @@ namespace UWP
                 .StartTakeoffAsync());
         }
         //=============================== helper functions ============================================
-        private async void Instance_SDKRegistrationEvent(SDKRegistrationState state, SDKError resultCode)
+        private async void Instance_SDKRegistrationEvent(SDKRegistrationState state, SDKError resultCode)//registers SDK with DJI
         {
             if (resultCode == SDKError.NO_ERROR)
             {
@@ -321,7 +334,7 @@ namespace UWP
                 System.Diagnostics.Debug.WriteLine(resultCode.ToString());
             }
         }
-        private DJI.WindowsSDK.Waypoint makeWaypoint(LocationCoordinate2D _location, double _height)
+        private DJI.WindowsSDK.Waypoint makeWaypoint(LocationCoordinate2D _location, double _height)//waypoint contructor
         {
             DJI.WindowsSDK.Waypoint waypoint = new DJI.WindowsSDK.Waypoint();
             waypoint.location = _location;
@@ -330,7 +343,7 @@ namespace UWP
             //waypoint.speed = flightSpeed;
             return waypoint;
         }
-        private DJI.WindowsSDK.Waypoint makeWaypoint(double _lat, double _lon, double _height)
+        private DJI.WindowsSDK.Waypoint makeWaypoint(double _lat, double _lon, double _height)//waypoint constructor
         {
             LocationCoordinate2D _location = new LocationCoordinate2D();
             _location.latitude = _lat;
@@ -341,14 +354,14 @@ namespace UWP
             waypoint.cornerRadiusInMeters = radius;
             return waypoint;
         }
-        private LocationCoordinate2D makeCoordinate(double _lat, double _lon)
+        private LocationCoordinate2D makeCoordinate(double _lat, double _lon)//coordinate constructor
         {
             LocationCoordinate2D _location = new LocationCoordinate2D();
             _location.latitude = _lat;
             _location.longitude = _lon;
             return _location;
         }
-        private async Task<double> getAngle()
+        private async Task<double> getAngle()//used to calculate angle in Logging Azimuth
         {
             //waypoint and its data
             ResultValue<LocationCoordinate2D?> place;
@@ -376,7 +389,7 @@ namespace UWP
             }
 
         }
-        private async Task<double> getAngleElevation()
+        private async Task<double> getAngleElevation()//used to calculate angle in logging elevation
         {
             //waypoint and its data
             ResultValue<LocationCoordinate2D?> place;
@@ -408,8 +421,9 @@ namespace UWP
             {//Q4
                 return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 270;
             }
+            //return 60;
         }
-        private async Task<string> getMagnitude()
+        private async Task<string> getMagnitude()//uses destop link to ask Fulltrust to get magnitude via VISA
         {
             //Ask for Magnitude key value pair from desktop service
             ValueSet request = new ValueSet();
@@ -423,19 +437,19 @@ namespace UWP
             return Magnitude;
             //return "5\n";
         }
-        private double toLon(double meters)
+        private double toLon(double meters)//conversion parameters must be updated for different geolocations
         {
             return meters * degreesInMeterLon;
         }
-        private double lonToMeters(double lon)
+        private double lonToMeters(double lon)//conversion parameters must be updated for different geolocations
         {
             return lon * (1 / degreesInMeterLon);
         }
-        private double toLat(double meters)
+        private double toLat(double meters)//conversion parameters must be updated for different geolocations
         {
             return meters * degreesInMeterLat;
         }
-        private double latToMeters(double lat)
+        private double latToMeters(double lat)//conversion parameters must be updated for different geolocations
         {
             return lat * (1 / degreesInMeterLat);
         }
@@ -453,18 +467,18 @@ namespace UWP
             _waypoint.location = place.value.Value;
             _waypoint.altitude = height.value.Value.value;
             _waypoint.cornerRadiusInMeters = 3;
-            _azimuthMission.waypoints.Add(_waypoint);
+            _currentMission.waypoints.Add(_waypoint);
             System.Diagnostics.Debug.WriteLine("added a waypoint at (" + _waypoint.location.latitude
                 + ", " + _waypoint.location.longitude + ")");
         }
         private async void oneMeterTestLat(object sender, RoutedEventArgs e)//reports distance in lat and lon from aboveAntenna
         {
             ////Add antenna location
-            //_azimuthMission.waypoints.Add(makeWaypoint(aboveAntenna.location, antennaElevation + .5));
+            //_currentMission.waypoints.Add(makeWaypoint(aboveAntenna.location, antennaElevation + .5));
             ////Make waypoint 1 meter away
             //LocationCoordinate2D place = makeCoordinate(aboveAntenna.location.latitude + toLat(1), aboveAntenna.location.longitude);
             ////Add waypoint at place, height
-            //_azimuthMission.waypoints.Add(makeWaypoint(place, antennaElevation + .5));
+            //_currentMission.waypoints.Add(makeWaypoint(place, antennaElevation + .5));
 
             //waypoint and its data
             ResultValue<LocationCoordinate2D?> place;
@@ -486,11 +500,11 @@ namespace UWP
         private void oneMeterTestLon(object sender, RoutedEventArgs e)//flys to aboveAntenna then 1 meter sideways and 1 meter foreward
         {
             //Add antenna location
-            _azimuthMission.waypoints.Add(aboveAntenna);
+            _currentMission.waypoints.Add(aboveAntenna);
             //Make waypoint 1 meter away
             LocationCoordinate2D place = makeCoordinate(aboveAntenna.location.latitude + toLat(3), aboveAntenna.location.longitude + toLon(3));
             //Add waypoint at place, height
-            _azimuthMission.waypoints.Add(makeWaypoint(place, aboveAntenna.altitude));
+            _currentMission.waypoints.Add(makeWaypoint(place, aboveAntenna.altitude));
         }
         private async void getLocation(object sender, RoutedEventArgs e)//prints location to debug terminal
         {
@@ -498,19 +512,19 @@ namespace UWP
             place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
             System.Diagnostics.Debug.WriteLine(place.value.Value.ToString());
         }
-        private void testlat(object sender, RoutedEventArgs e)
+        private void testlat(object sender, RoutedEventArgs e)//flys 9.144 meters north and back 2 times
         {
-            _azimuthMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude), antennaElevation));
-            _azimuthMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude + toLat(9.144), aboveAntenna.location.longitude), antennaElevation));
-            _azimuthMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude), antennaElevation));
-            _azimuthMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude + toLat(9.144), aboveAntenna.location.longitude), antennaElevation));
+            _currentMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude), antennaElevation));
+            _currentMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude + toLat(9.144), aboveAntenna.location.longitude), antennaElevation));
+            _currentMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude), antennaElevation));
+            _currentMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude + toLat(9.144), aboveAntenna.location.longitude), antennaElevation));
         }
-        private void testlon(object sender, RoutedEventArgs e)
+        private void testlon(object sender, RoutedEventArgs e)//flys 9.144 meters east and back 2 times
         {
-            _azimuthMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude), antennaElevation));
-            _azimuthMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude + toLon(9.144)), antennaElevation));
-            _azimuthMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude), antennaElevation));
-            _azimuthMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude + toLon(9.144)), antennaElevation));
+            _currentMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude), antennaElevation));
+            _currentMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude + toLon(9.144)), antennaElevation));
+            _currentMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude), antennaElevation));
+            _currentMission.waypoints.Add(makeWaypoint(makeCoordinate(aboveAntenna.location.latitude, aboveAntenna.location.longitude + toLon(9.144)), antennaElevation));
         }
 
         //=========================== unused utility functions =============================================
