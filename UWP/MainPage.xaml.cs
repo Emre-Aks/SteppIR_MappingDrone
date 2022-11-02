@@ -1,19 +1,15 @@
 ﻿///Property of SteppIR
-///Written by Emre Aksan eaksan1@gmail.com
-
-
-///CREDIT: desktop link code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial
-///https://stefanwick.com/2018/04/16/uwp-with-desktop-extension-part-3/
+///Written by Emre Aksan
+//Questions? eaksan1@gmail.com, +1-425-492-6769
 
 /// Summary
 /// Insert Summary here z z z z i shleep
 /// Summary
-/// 
 
-///TODO
-///add/update function summareis
-///match to 80 character max line length
-///TODO
+///CREDIT: desktop link code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial
+///https://stefanwick.com/2018/04/16/uwp-with-desktop-extension-part-3/
+
+
 
 using DJI.WindowsSDK;
 using System;
