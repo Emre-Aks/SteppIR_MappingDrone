@@ -53,6 +53,7 @@ namespace UWP
         private DJI.WindowsSDK.Waypoint aboveAntenna;//Safe waypoint at min distace above antenna
         private double antennaElevation;//elevation of antenna
         private double antennaMinRadius;//minimum radius that can be flown around the antenna
+        private double maxGain = -999;//set by startLoggingElevation
         private double altitudeMaxGain = 0;//set by startLoggingElevation
 
         //globals for internal use
@@ -262,11 +263,13 @@ namespace UWP
             {
                 //get magnitude
                 mag = await getMagnitude();
-                //Update altitude of max gain
-                if (altitudeMaxGain < Convert.ToDouble(mag))
+                System.Diagnostics.Debug.WriteLine(Convert.ToDouble(mag));
+                //Update altitude of max gain and max gain
+                if (maxGain < Convert.ToDouble(mag))
                 {
                     height = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAltitudeAsync();
                     altitudeMaxGain = height.value.Value.value;
+                    maxGain = Convert.ToDouble(mag);
                 }
                 //add angle and magnitude to file, output to debug
                 pair += (await getAngleElevation() + ",");
@@ -431,7 +434,7 @@ namespace UWP
             string Magnitude = response.Message["Magnitude"].ToString();
             //System.Diagnostics.Debug.WriteLine(Magnitude);
             return Magnitude;
-            //return "5\n";
+            //return "-998.9\n";
         }
         private double toLon(double meters)//conversion parameters must be updated for different geolocations
         {
