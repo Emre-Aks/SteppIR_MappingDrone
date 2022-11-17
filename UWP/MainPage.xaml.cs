@@ -43,10 +43,11 @@ namespace UWP
         private const double radius = 9.144;//radius desired to fly in meters (UWB feild yellow circle is 9.144 meters)
         private const double degreesInMeterLat = .0000095;//at UWB, .0000095
         private const double degreesInMeterLon = .0000140;//at uwb, .0000140
-        private const int pollRate = 150;//time in milliseconds to wait between data points
+        private const int pollRate = 200;//time in milliseconds to wait between data points
         private const double _cornerRadius = 1;//bezier curve radius
-        private const double flightSpeed = 1;//speed to fly at
-        private const int resolution = 8;//# of points in azimuth mission
+        private const double flightSpeedAzimuth = .44;//speed to fly at
+        private const double flightSpeedElevation = .22;//speed to fly at
+        private const int resolutionAzimuth = 8;//# of points in azimuth mission
         private const int resolutionElevation = 6;//# of points in elevation mission
 
         //Antenna Geometrics
@@ -103,62 +104,12 @@ namespace UWP
         }
         private void generateAzimuthMission(object sender, RoutedEventArgs e)//makes azimuth mission using a unit circle
         {
-            LocationCoordinate2D[] locations = new LocationCoordinate2D[resolution + 1];
-            int pointCount = 0;
-            for (double i = 0; i <= 360; i += 360 / resolution)
-            {
-                //get the offet in (x-latitude,y-longitude) using sin and cos with a unit circle, then multiplying by desired radius
-                locations[pointCount] = makeCoordinate(
-                    aboveAntenna.location.latitude + toLat(Math.Sin(i) * radius),//lat
-                    aboveAntenna.location.longitude + toLon(Math.Cos(i) * radius));//lon
-
-                System.Diagnostics.Debug.WriteLine(0 + Math.Sin(i) * radius);//lat in meters
-                System.Diagnostics.Debug.WriteLine(0 + Math.Cos(i) * radius);//lon in meters
-                pointCount++;
-            }
-            //add locations to azimuthMission
-            DJI.WindowsSDK.Waypoint curr = new DJI.WindowsSDK.Waypoint();
-            for (int i = 0; i < resolution + 1; i++)
-            {
-                curr = makeWaypoint(locations[i], altitudeMaxGain);//elevation is set here, can be antennaElevation or altitudeMaxGain
-                curr.cornerRadiusInMeters = _cornerRadius;
-                curr.speed = flightSpeed;
-                _currentMission.waypoints.Add(curr);
-            }
-        }
-        private void generateElevationMission(object sender, RoutedEventArgs e)//makes elevation mission using a unit circle
-        {
-            DJI.WindowsSDK.Waypoint[] locations = new DJI.WindowsSDK.Waypoint[resolutionElevation];
-            int pointCount = 0;
-            for (double i = 0; i <= 180; i += (180 / (resolutionElevation - 1)))
-            {
-                //get the offet in (x-latitude,y-longitude) using sin and cos with a unit circle, then multiplying by desired radius
-                locations[pointCount] = makeWaypoint(
-                    makeCoordinate(
-                        aboveAntenna.location.latitude + toLat(Math.Cos(i * Math.PI / 180) * radius),//lat
-                        aboveAntenna.location.longitude),//lon
-                        antennaElevation + (Math.Sin(i * Math.PI / 180) * radius));//elevation
-
-                System.Diagnostics.Debug.WriteLine(0 + Math.Cos(i * Math.PI/180) * radius);//lat in meters
-                System.Diagnostics.Debug.WriteLine(0);//lon in meters
-                System.Diagnostics.Debug.WriteLine(0 + (Math.Sin(i * Math.PI / 180) * radius));//elevation
-                pointCount++;
-            }
-            //add locations to azimuthMission
-            for (int i = 0; i < resolutionElevation; i++)
-            {
-                locations[i].cornerRadiusInMeters = _cornerRadius;
-                locations[i].speed = flightSpeed;
-                _currentMission.waypoints.Add(locations[i]);
-            }
-        }
-        private async void InitMission(object sender, RoutedEventArgs e)//initializes and configures _altitudeMission
-        {
+            InitMission();
             _currentMission = new WaypointMission()
             {
                 waypointCount = 0,
                 maxFlightSpeed = 10,
-                autoFlightSpeed = flightSpeed,
+                autoFlightSpeed = flightSpeedAzimuth,
                 finishedAction = WaypointMissionFinishedAction.NO_ACTION,
                 headingMode = WaypointMissionHeadingMode.TOWARD_POINT_OF_INTEREST,
                 flightPathMode = WaypointMissionFlightPathMode.CURVED,
@@ -174,9 +125,71 @@ namespace UWP
                 missionID = 0,
                 waypoints = new List<Waypoint>()
             };
+
+            LocationCoordinate2D[] locations = new LocationCoordinate2D[resolutionAzimuth + 1];
+            int pointCount = 0;
+            for (double i = 0; i <= 360; i += 360 / resolutionAzimuth)
+            {
+                //get the offet in (x-latitude,y-longitude) using sin and cos with a unit circle, then multiplying by desired radius
+                locations[pointCount] = makeCoordinate(
+                    aboveAntenna.location.latitude + toLat(Math.Sin(i) * radius),//lat
+                    aboveAntenna.location.longitude + toLon(Math.Cos(i) * radius));//lon
+                pointCount++;
+            }
+            //add locations to azimuthMission
+            DJI.WindowsSDK.Waypoint curr = new DJI.WindowsSDK.Waypoint();
+            for (int i = 0; i < resolutionAzimuth + 1; i++)
+            {
+                curr = makeWaypoint(locations[i], altitudeMaxGain);//elevation is set here, can be antennaElevation or altitudeMaxGain
+                curr.cornerRadiusInMeters = _cornerRadius;
+                curr.speed = flightSpeedAzimuth;
+                _currentMission.waypoints.Add(curr);
+            }
+        }
+        private void generateElevationMission(object sender, RoutedEventArgs e)//makes elevation mission using a unit circle
+        {
+            InitMission();
+            _currentMission = new WaypointMission()
+            {
+                waypointCount = 0,
+                maxFlightSpeed = 10,
+                autoFlightSpeed = flightSpeedElevation,
+                finishedAction = WaypointMissionFinishedAction.NO_ACTION,
+                headingMode = WaypointMissionHeadingMode.AUTO,
+                flightPathMode = WaypointMissionFlightPathMode.CURVED,
+                gotoFirstWaypointMode = WaypointMissionGotoFirstWaypointMode.SAFELY,
+                exitMissionOnRCSignalLostEnabled = false,
+                gimbalPitchRotationEnabled = true,
+                repeatTimes = 0,
+                missionID = 0,
+                waypoints = new List<Waypoint>()
+            };
+
+            DJI.WindowsSDK.Waypoint[] locations = new DJI.WindowsSDK.Waypoint[resolutionElevation];
+            int pointCount = 0;
+            for (double i = 0; i <= 180; i += (180 / (resolutionElevation - 1)))
+            {
+                //get the offet in (x-latitude,y-longitude) using sin and cos with a unit circle, then multiplying by desired radius
+                locations[pointCount] = makeWaypoint(
+                    makeCoordinate(
+                        aboveAntenna.location.latitude + toLat(Math.Cos(i * Math.PI / 180) * radius),//lat
+                        aboveAntenna.location.longitude),//lon
+                        antennaElevation + (Math.Sin(i * Math.PI / 180) * radius));//elevation
+                pointCount++;
+            }
+            //add locations to azimuthMission
+            for (int i = 0; i < resolutionElevation; i++)
+            {
+                locations[i].cornerRadiusInMeters = _cornerRadius;
+                locations[i].speed = flightSpeedElevation;
+                _currentMission.waypoints.Add(locations[i]);
+            }
+        }
+        private async void InitMission()//initializes and configures _altitudeMission
+        {
             //for error reporting
             DJI.WindowsSDK.SDKError resultcode;
-            //set ground station mode to true, enable object avoidance, and  vision assisted flight
+            //set ground station mode to true, enable object avoidance, and vision assisted flight
             resultcode = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0)
                 .SetGroundStationModeEnabledAsync(trueMsg);
             System.Diagnostics.Debug.WriteLine(resultcode.ToString());
@@ -235,8 +248,8 @@ namespace UWP
             {
                 pair += (await getAngle() + ",");
                 pair += (await getMagnitude());
-                await Windows.Storage.FileIO.AppendTextAsync(azimuthFile, pair);
                 System.Diagnostics.Debug.WriteLine(pair);
+                await Windows.Storage.FileIO.AppendTextAsync(azimuthFile, pair);
                 pair = "";
                 ////wait for time set by polling rate
                 await Task.Delay(pollRate);
@@ -246,8 +259,6 @@ namespace UWP
         }
         private async void startLoggingElevation(object sender, RoutedEventArgs e)//logs angle and magnitude for elevation mission
         {
-            ResultValue<DoubleMsg?> height;
-
             System.Diagnostics.Debug.WriteLine("Started logging");
             // Create sample file; replace if exists.
             Windows.Storage.StorageFolder storageFolder =
@@ -256,10 +267,12 @@ namespace UWP
                 await storageFolder.CreateFileAsync("elevationPlot.csv",
                     Windows.Storage.CreationCollisionOption.GenerateUniqueName);
 
+            maxGain = -999;//reset maxGain
             string pair = "";
             string mag;
+            ResultValue<DoubleMsg?> height;
             executing = true;
-            while (executing)//keep logging till mission stops executing
+            while (executing)//keep logging till flag set false by stopExecuting
             {
                 //get magnitude
                 mag = await getMagnitude();
@@ -369,23 +382,47 @@ namespace UWP
             place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
 
             //get two sides of triangle
-            double y = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);
-            double x = lonToMeters(place.value.Value.longitude - aboveAntenna.location.longitude);
+            double x = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);
+            double y = lonToMeters(place.value.Value.longitude - aboveAntenna.location.longitude);
 
             //Right triangle, solve for angle, convert from radians to degrees
-            //return (180 / Math.PI) * Math.Atan(x / y);
-            if (x > 0 && y > 0) {//Q1
-                return (180 / Math.PI) * Math.Atan(y/x);
+            if (x >= 0 && y >= 0)
+            {//Q1
+                return (180 / Math.PI) * Math.Atan(y / x);//90 to 180 degrees
             }
-            else if (x < 0 && y > 0) {//Q2
-                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 90;
+            else if (x < 0 && y >= 0)
+            {//Q2
+                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 90;//180 to 270 degrees
             }
-            else if (x < 0 && y < 0) {//Q3
-                return ((180 / Math.PI) * Math.Atan(y / x)) + 180;
+            else if (x < 0 && y < 0)
+            {//Q3
+                return ((180 / Math.PI) * Math.Atan(y / x)) + 180;//270 to 360 dgrees
             }
-            else {//Q4
-                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 270;
+            else if (x >= 0 && y < 0)
+            {//Q4
+                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 270;//0 to 90 degrees
             }
+            else
+            {
+                return -1234567;
+            }
+
+            //if (x > 0 && y > 0)
+            //{//Q1
+            //    return (180 / Math.PI) * Math.Atan(y / x);
+            //}
+            //else if (x < 0 && y > 0)
+            //{//Q2
+            //    return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 90;
+            //}
+            //else if (x < 0 && y < 0)
+            //{//Q3
+            //    return ((180 / Math.PI) * Math.Atan(y / x)) + 180;
+            //}
+            //else
+            //{//Q4
+            //    return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 270;
+            //}
 
         }
         private async Task<double> getAngleElevation()//used to calculate angle in logging elevation
@@ -399,42 +436,54 @@ namespace UWP
             height = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAltitudeAsync();
 
             //get two sides of triangle
-            double y = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);
-            double x = height.value.Value.value;
+            double x = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);//distance from antenna in lat
+            double y = height.value.Value.value - antennaElevation;//distance from antenna in elevation
 
             //Right triangle, solve for angle, convert from radians to degrees
-            //return (180 / Math.PI) * Math.Atan(x / y);
-            if (x > 0 && y > 0)
+            if (x >= 0 && y >= 0)
             {//Q1
-                return (180 / Math.PI) * Math.Atan(y / x);
+                return (180 / Math.PI) * Math.Atan(y / x);//90 to 180 degrees
             }
-            else if (x < 0 && y > 0)
+            else if (x < 0 && y >= 0)
             {//Q2
-                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 90;
+                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 90;//180 to 270 degrees
             }
             else if (x < 0 && y < 0)
             {//Q3
-                return ((180 / Math.PI) * Math.Atan(y / x)) + 180;
+                return ((180 / Math.PI) * Math.Atan(y / x)) + 180;//270 to 360 dgrees
+            }
+            else if(x >= 0 && y < 0)
+            {//Q4
+                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 270;//0 to 90 degrees
             }
             else
-            {//Q4
-                return ((180 / Math.PI) * Math.Abs(Math.Atan(x / y))) + 270;
+            {
+                return -1234567;
             }
             //return 60;
         }
         private async Task<string> getMagnitude()//uses destop link to ask Fulltrust to get magnitude via VISA
         {
-            //Ask for Magnitude key value pair from desktop service
-            ValueSet request = new ValueSet();
-            request.Add("Magnitude", "GIMME");
-            //get response
-            AppServiceResponse response = await App.Connection.SendMessageAsync(request);
+            ////Ask for Magnitude key value pair from desktop service
+            //ValueSet request = new ValueSet();
+            //request.Add("Magnitude", "GIMME");
+            ////get response
+            //AppServiceResponse response = await App.Connection.SendMessageAsync(request);
 
-            //output to debug and return Magnitude
-            string Magnitude = response.Message["Magnitude"].ToString();
-            //System.Diagnostics.Debug.WriteLine(Magnitude);
-            return Magnitude;
+            ////output to debug and return Magnitude
+            //string Magnitude = response.Message["Magnitude"].ToString();
+            ////System.Diagnostics.Debug.WriteLine(Magnitude);
+            //return Magnitude;
             //return "-998.9\n";
+            //waypoint and its data
+            ResultValue<LocationCoordinate2D?> place;
+
+            //Get current latitude, longitude, and altitude
+            place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
+
+            //get two sides of triangle
+            double x = latToMeters(place.value.Value.latitude - aboveAntenna.location.latitude);
+            return x.ToString() + "\n";
         }
         private double toLon(double meters)//conversion parameters must be updated for different geolocations
         {
@@ -508,8 +557,13 @@ namespace UWP
         private async void getLocation(object sender, RoutedEventArgs e)//prints location to debug terminal
         {
             DJI.WindowsSDK.ResultValue<LocationCoordinate2D?> place;
+            ResultValue<DoubleMsg?> height;
+
             place = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAircraftLocationAsync();
+            height = await DJISDKManager.Instance.ComponentManager.GetFlightControllerHandler(0, 0).GetAltitudeAsync();
             System.Diagnostics.Debug.WriteLine(place.value.Value.ToString());
+            System.Diagnostics.Debug.WriteLine(height.value.Value.value);
+
         }
         private void testlat(object sender, RoutedEventArgs e)//flys 9.144 meters north and back 2 times
         {
