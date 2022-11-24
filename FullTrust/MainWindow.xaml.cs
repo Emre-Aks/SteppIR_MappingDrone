@@ -22,7 +22,7 @@ namespace FullTrust
     public partial class MainWindow : Window
     {
         private AppServiceConnection connection = null;
-
+        bool sessionFlag = false;
         public MainWindow()
         {
             InitializeComponent();
@@ -46,7 +46,7 @@ namespace FullTrust
                 // something went wrong ...
                 MessageBox.Show(status.ToString());
                 this.IsEnabled = false;
-            }        
+            }
         }
 
         /// <summary>
@@ -66,17 +66,25 @@ namespace FullTrust
         /// </summary>
         private async void Connection_RequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
         {
-            string data = "TEST DATA";
+            string data = "TEST DATA\n";
             ValueSet response = new ValueSet();
 
-            //Start session with spec analyzer
-            var session = (Ivi.Visa.IMessageBasedSession)
+            try
+            {
+                ////Start session with spec analyzer
+                var session = (Ivi.Visa.IMessageBasedSession)
                 Ivi.Visa.GlobalResourceManager.Open("USB0::0x1AB1::0x0960::DSA8A221700409::INSTR");
 
-            //Ask for value at marker
-            session.FormattedIO.WriteLine("CALC:MARK:Y?");
-            //Get Response
-            data = session.FormattedIO.ReadLine();
+                //Ask for value at marker
+                session.FormattedIO.WriteLine("CALC:MARK:Y?");
+                //Get Response
+                data = session.FormattedIO.ReadLine();
+                session.Dispose();
+            }
+            catch
+            {
+                data = "BAD DATA\n";
+            }
 
             //send to UWP app
             response.Add("Magnitude", data);
