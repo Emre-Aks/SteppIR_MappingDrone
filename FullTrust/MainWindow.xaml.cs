@@ -1,5 +1,11 @@
-﻿//CREDIT: desktop link code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial
+﻿//Property of SteppIR
+//Written by Emre Aksan
+
+///CREDIT: This code is heavily reused from Stefan Wick's UWP with Desktop Extension tutorial,
+///save for the VISA code commuicating with the spectrum analyzer.
 ///https://stefanwick.com/2018/04/16/uwp-with-desktop-extension-part-3/
+///
+///Refer to UWP > MainPage.xaml.cs for program description
 
 using Microsoft.Win32;
 using System;
@@ -62,7 +68,7 @@ namespace FullTrust
         }
 
         /// <summary>
-        /// Handles the event when the desktop process receives a request from the UWP app
+        /// Reads data from the spectrum analyzer and sends it to the UWP program when requested.
         /// </summary>
         private async void Connection_RequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
         {
@@ -83,7 +89,8 @@ namespace FullTrust
             }
             catch
             {
-                data = "BAD DATA\n";
+                data = "BAD DATA\n";//currently you must manually delete lines with 'BAD DATA'
+                                    //in the csv
             }
 
             //send to UWP app

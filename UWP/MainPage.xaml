@@ -28,15 +28,15 @@
                 VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
 
         <Button x:Name="getstatebutton" Click="GetState" Height="40"
-                Width="120" Content="Get State" Margin="153,40,0,0"
+                Width="120" Content="Get State" Margin="270,40,0,0"
                 VerticalAlignment="Top" />
 
         <Button x:Name="setantennalocation" Click="setAntennaLocation" Height="40"
-                Width="159" Content="Set Antenna location" Margin="28,118,0,0"
+                Width="159" Content="Set Antenna location" Margin="28,149,0,0"
                 VerticalAlignment="Top" RenderTransformOrigin="1.55,3.025" />
 
         <Button x:Name="setantennaheight" Click="setAntennaElevation" Height="40"
-                Width="165" Content="Set Antenna Elevation" Margin="192,118,0,0"
+                Width="165" Content="Set Antenna Elevation" Margin="192,149,0,0"
                 VerticalAlignment="Top" />
 
         <Button x:Name="makeAzimuthMission" Click="generateAzimuthMission" Height="40"
@@ -59,15 +59,7 @@
             Width="165" Content="Start Logging Elevation" Margin="201,324,0,0"
             VerticalAlignment="Top" />
 
-        <Button x:Name="startLoggingElevationButton_Copy" Click="getLocation" Height="40"
-            Width="165" Content="get Location" Margin="225,384,0,0"
-            VerticalAlignment="Top" />
-
         <Button x:Name="Initmissionbutton" Click="InitMission" Height="40"
-            Width="165" Content="Init Mission" Margin="120,179,0,0" VerticalAlignment="Top" />
-
-        <!--<Button x:Name="testlonButton" Click="testlon" Height="40"
-            Width="165" Content="Make Test Lon Mission" Margin="310,198,0,0"
-            VerticalAlignment="Top" />-->
+            Width="165" Content="Init Mission" Margin="28,104,0,0" VerticalAlignment="Top" />
     </Grid>
 </Page>
