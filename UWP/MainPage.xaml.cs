@@ -27,6 +27,9 @@
 /// Information is sent over desktop link from 'Fulltrust' to 'UWP'. For more details visit stefan
 /// wicks tutorial linked above.
 
+///Good luck steppIR 3!
+
+
 using DJI.WindowsSDK;
 using System;
 using System.Collections.Generic;
